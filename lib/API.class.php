@@ -267,5 +267,32 @@ class API {
 		return MySQL::_()->query($sGetServersQuery);
 	}
 
+	public function doesServerIdExist($iServerId) {
+		$iServerId = (int) $iServerId;
+		$sQuery = "
+			SELECT
+				COUNT(*) AS `total`
+			FROM
+				`servers`
+			WHERE
+				`id` = {$iServerId}
+		";
+		$aResult = MySQL::_()->query($sQuery);
+		if($aResult[0]['total'] == 1) return true;
+		return false;
+	}
+
+	public function setServer($iUserId, $iServerId) {
+		if(empty($iUserId) || empty($iServerId)) throw new Exception('Bad input');
+		$sSetServerQuery = "
+			REPLACE INTO
+				`user_server`
+				(`user_id`, `server_id`)
+			VALUES
+				({$iUserId}, {$iServerId})
+		";
+		MySQL::_()->query($sSetServerQuery);
+	}
+
 }
 

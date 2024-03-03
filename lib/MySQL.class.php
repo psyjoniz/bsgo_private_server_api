@@ -109,7 +109,7 @@ class MySQL {
 		$this->iInsertId = @mysqli_insert_id($this->dbHand);
 		if($bReturnResults) // only build and return results if we were looking for them
 		{
-			if($sSQLStart != 'insert' && $sSQLStart != 'update' && $sSQLStart != 'delete')
+			if($sSQLStart != 'insert' && $sSQLStart != 'update' && $sSQLStart != 'delete' && $sSQLStart != 'replace')
 			{
 				$aResults = array();
 				//if(gettype($this->qResults) == 'mysqli_result')

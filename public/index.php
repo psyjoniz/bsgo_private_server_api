@@ -7,10 +7,12 @@ try {
 	$oResp   = new stdClass();
 	$api_key = trim(file_get_contents('../api_key'));
 
+	require_once('../vendor/autoload.php');
 	require_once('../lib/Request/Get.class.php');
 	require_once('../lib/Request/Post.class.php');
 	require_once('../lib/MySQL.class.php');
 	require_once('../lib/API.class.php');
+	require_once('../lib/AwsSdk.class.php');
 
 	$sApiKey = Post::_()->get('api_key');
 	$sAction = Get::_()->get('action');

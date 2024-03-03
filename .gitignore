@@ -1,3 +1,4 @@
 *.log
 *.swp
 api_key
+aws_sdk_credentials.inc
