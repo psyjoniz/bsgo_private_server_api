@@ -4,16 +4,19 @@ header('Content-type: application/json');
 
 try {
 
-	$oResp   = new stdClass();
 	$api_key = trim(file_get_contents('../api_key'));
 
 	require_once('../vendor/autoload.php');
+	require_once('../lib/Response.class.php');
 	require_once('../lib/Request/Get.class.php');
 	require_once('../lib/Request/Post.class.php');
 	require_once('../lib/MySQL.class.php');
+	require_once('../lib/MongoDB.class.php');
 	require_once('../lib/API.class.php');
 	require_once('../lib/AwsSdk.class.php');
+	require_once('../lib/BSGO.class.php');
 
+	$oResp   = APIResponse::_();
 	$sApiKey = Post::_()->get('api_key');
 	$sAction = Get::_()->get('action');
 
@@ -26,11 +29,11 @@ try {
 
 } catch(Exception $e) {
 
-	$oResp          = new stdClass();
+	$oResp          = APIResponse::_();
 	$oResp->status  = 'ERROR';
 	$oResp->message = $e->getMessage();
 
 }
 
-die(json_encode($oResp));
+die(json_encode($oResp->compile()));
 

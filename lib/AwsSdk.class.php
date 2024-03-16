@@ -43,7 +43,7 @@ class AwsSdk {
 		}
 	}
 
-	public function addWhitelistRule($sMachineFingerprint, $sIp, $iPort) {
+	public function addWhitelistRule($sMachineFingerprint, $sIp, $sEmail, $iPort) {
 		try {
 			self::$hEc2Client->authorizeSecurityGroupIngress([
 				'GroupId' => self::$sSecurityGroupId,
@@ -55,7 +55,7 @@ class AwsSdk {
 						'IpRanges'   => [
 							[
 								'CidrIp'      => $sIp.'/32',
-								'Description' => $sMachineFingerprint,
+								'Description' => 'bsgo-whitelist::'.$sMachineFingerprint.'::'.$sEmail,
 							],
 						],
 					],
@@ -66,7 +66,7 @@ class AwsSdk {
 		}
 	}
 
-	public function removeWhitelistRules($sMachineFingerprint, $sIp, $aRules = null) {
+	public function removeWhitelistRules($sMachineFingerprint, $sIp, $sEmail, $aRules = null) {
 		$ingressRulesToDelete = [];
 		if(null === $aRules) $aRules = $this->getWhitelistRules();
 		foreach ($aRules as $securityGroup) {
@@ -75,7 +75,7 @@ class AwsSdk {
 					if (
 						isset($range['Description'])
 						&& (
-							strpos($range['Description'], $sMachineFingerprint) !== false)
+							strpos($range['Description'], 'bsgo-whitelist::'.$sMachineFingerprint.'::'.$sEmail) !== false)
 							|| (isset($range['CidrIp']) && strpos($range['CidrIp'], $sIp) !== false
 						)
 					) {

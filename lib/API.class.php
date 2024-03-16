@@ -1,6 +1,7 @@
 <?php
 
 require_once('MySQL.class.php');
+require_once('Utils.class.php');
 
 class API {
 
@@ -49,6 +50,7 @@ class API {
 				`user_id` = {$iUserId}
 		";
 		MySQL::_()->query($sCreateUserServerQuery);
+		return $iUserId;
 	}
 
 	public function authenticateUser($sEmail, $sPassword) {
@@ -195,7 +197,9 @@ class API {
 				`u`.`authenticated`,
 				`u`.`last_seen`,
 				`u`.`type`,
-				`u`.`ip`
+				`u`.`ip`,
+				`u`.`bsgo_user_id`,
+				`u`.`bsgo_session_id`
 			FROM
 				`users` `u`
 			WHERE
@@ -224,12 +228,17 @@ class API {
 		return $aReturn;
 	}
 
-	public function getAllUsers() {
+	public function getAllUsers($aUserData) {
+		$sWhere = '';
+		if($aUserData['user']['type'] == 'player')    $sWhere = "WHERE `u`.`id` = {$aUserData['user']['id']}";
+		if($aUserData['user']['type'] == 'moderator') $sWhere = "WHERE `u`.`type` = 'player' OR `u`.`id` = {$aUserData['user']['id']}";
+		if($aUserData['user']['type'] == 'developer') $sWhere = "WHERE `u`.`type` IN ('moderator','player') OR `u`.`id` = {$aUserData['user']['id']}";
 		$sAllUsersQuery = "
 			SELECT
 				`u`.`id`
 			FROM
 				`users` `u`
+			{$sWhere}
 		";
 		$aAllUsers = MySQL::_()->query($sAllUsersQuery);
 		$aAllUsersReturn = [];
@@ -254,7 +263,9 @@ class API {
 		MySQL::_()->query($sCreateServerQuery);
 	}
 
-	public function getServers() {
+	public function getServers($sUserType = 'player') {
+		$sWhere = '';
+		if(in_array($sUserType, ['player','moderator'])) $sWhere = "WHERE `s`.`type` = 'prod'";
 		$sGetServersQuery = "
 			SELECT
 				`s`.`id`,
@@ -263,6 +274,7 @@ class API {
 				`s`.`port`
 			FROM
 				`servers` `s`
+			{$sWhere}
 		";
 		return MySQL::_()->query($sGetServersQuery);
 	}
@@ -292,6 +304,66 @@ class API {
 				({$iUserId}, {$iServerId})
 		";
 		MySQL::_()->query($sSetServerQuery);
+	}
+
+	public function generateInviteKey($iCreatedUserId) {
+		$sKey = Utils::randomPassword(32, true, true, true, false);
+		$sQuery = "
+			INSERT INTO
+				`invitations`
+			SET
+				`key` = '{$sKey}',
+				`created_user_id` = {$iCreatedUserId}
+		";
+		MySQL::_()->query($sQuery);
+		return $sKey;
+	}
+
+	public function isInviteKeyValid($sInviteKey) {
+		$sInviteKey = MySQL::_()->escapeString($sInviteKey);
+		$sQuery = "
+			SELECT
+				COUNT(*) AS `total`
+			FROM
+				`invitations`
+			WHERE
+				`key` = '{$sInviteKey}'
+				AND `used` = '0000-00-00 00:00:00'
+				AND `used_user_id` IS NULL
+		";
+		$aResult = MySQL::_()->query($sQuery);
+		return (!empty($aResult[0]['total']) && $aResult[0]['total'] == 1);
+	}
+
+	public function useInviteKey($iUserId, $sInviteKey) {
+		$iUserId = (int) $iUserId;
+		$sInviteKey = MySQL::_()->escapeString($sInviteKey);
+		$sQuery = "
+			UPDATE
+				`invitations`
+			SET
+				`used` = NOW(),
+				`used_user_id` = {$iUserId}
+			WHERE
+				`key` = '{$sInviteKey}'
+		";
+		MySQL::_()->query($sQuery);
+	}
+
+	public function updateBSGOUserData($iUserId, $aBSGOUserData) {
+		$iUserId        = (int) $iUserId;
+		$iBSGOUserId    = (int) $aBSGOUserData['iUserId'];
+		$sBSGOSessionId = MySQL::_()->escapeString($aBSGOUserData['sSessionId']);
+		$sQuery = "
+			UPDATE
+				`users`
+			SET
+				`bsgo_user_id` = {$iBSGOUserId},
+				`bsgo_session_id` = '{$sBSGOSessionId}'
+			WHERE
+				`id` = {$iUserId}
+		";
+		MySQL::_()->query($sQuery);
 	}
 
 }
