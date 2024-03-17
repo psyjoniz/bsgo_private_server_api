@@ -350,6 +350,23 @@ class API {
 		MySQL::_()->query($sQuery);
 	}
 
+	public function getPendingInvites() {
+		$sQuery = "
+			SELECT
+				`i`.`created`,
+				`i`.`key`,
+				`u`.`email` AS `created_by`
+			FROM
+				`invitations` `i`
+			JOIN
+				`users` `u` ON
+					`u`.`id` = `i`.`created_user_id`
+			WHERE
+				`i`.`used_user_id` IS NULL
+		";
+		return MySQL::_()->query($sQuery);
+	}
+
 	public function updateBSGOUserData($iUserId, $aBSGOUserData) {
 		$iUserId        = (int) $iUserId;
 		$iBSGOUserId    = (int) $aBSGOUserData['iUserId'];
